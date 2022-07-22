@@ -84,7 +84,7 @@ class ApiController extends Controller
         if ($product) {
             $product->forceDelete();
 
-            return response()->json("Produto  {$id} removido com sucesso.", 200);
+            return response()->json("Produto removido com sucesso! ID: {$id}", 200);
         }
 
         return response()->json("Produto {$id} não encontrado.", 404);

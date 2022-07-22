@@ -107,3 +107,71 @@ Utilize a seguinte API para importar os produtos: [https://fakestoreapi.com/docs
 
 Se houver dúvidas, por favor, abra uma issue nesse repositório. Ficaremos felizes em ajudá-lo ou até mesmo melhorar essa documentação.
 
+---
+Feito por [Kênia](https://www.linkedin.com/in/kenia-alves-pereira-araujo/)
+
+## Como usar a API
+
+```sh
+[Base URL: localhost:8000/api]
+```
+Através dessa api é possível recuperar um ou vários produtos. Também é possível cadastrar e atualizar um produto.
+
+### Cadastrar um produto
+Método: *POST*
+Caminho: ```/product```
+**Retorno** (exemplo): "Produto criado com sucesso! ID: 1"
+
+### Atualizar um produto
+Método: *PUT*
+Caminhho: ```/product/{ID}```
+Parâmetro: Id do produto (integer)
+**Retorno** (exemplo): "Produto atualizado com sucesso! ID: 1"
+
+### Deletar um produto
+Método: *DELETE*
+Caminhho: ```/product/{ID}```
+Parâmetro: Id do produto (integer)
+**Retorno** (exemplo): "Produto removido com sucesso! ID: 1"
+
+### Buscar produto por ID específico
+Método: *GET*
+Caminho: ```product/{ID}```
+Parâmetro: ID do produto {integer}
+**Retorno**: Dados do produto no formato json conforme especificado no payload acima
+
+### Buscar produtos por uma categoria específica
+Método: *GET*
+Caminho: ```products/category/{CATEGORIA}```
+Parâmetro: Categoria do produto {string}
+**Retorno**: Uma lista de produtos no formato json conforme especificado no payload acima
+
+### Buscar todos os produtos
+Método: *GET*
+Caminho: ```products/```
+**Retorno**: Uma lista de todos os produtos no formato json conforme especificado no payload acima
+
+### Buscar produtos por nome e categoria
+Método: *GET*
+Caminho: ```products/```
+Request: É necessário informar nome e categoria
+```json
+{
+    "name": "product name",
+    "category": "test"
+}
+```
+**Retorno**: Uma lista de produtos de acordo com a categoria e o nome do produto informado, no formato json conforme especificado no payload acima
+
+---
+
+## Como importar produtos da API externa
+
+Esse recurso permite cadastrar ou atualizar um ou vários produtos de uma vez.
+
+**Opções**:
+1. Trazer vários produtos. Após inserir o comando, haverá uma opçao de informar um limite máximo de produtos a serem importados. O sistema irá perguntar se deseja sincronizar[^1] os produtos.
+```php artisan products:import```
+2. Trazer somente um produto. Caso o produto a ser importado já exista na base, o sistema irá perguntar se deseja sincronizar os produtos.
+```php artisan products:import --id=123```
+[^1]: A sincronização consiste em atualizar os produtos do seu catálogo, que sejam de origem externa e correspondam aos produtos trazidos na busca atual, com as informações externas.
