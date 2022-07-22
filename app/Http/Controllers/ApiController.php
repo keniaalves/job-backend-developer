@@ -1,21 +1,26 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\ProductRequest;
+use App\Http\Resources\Product as ProductResource;
 
 class ApiController extends Controller
 {
     public function getAllProducts(Request $request)
     {
         if ($request->image === false) {
-            $filteredProducts = Product::all()->makeHidden(['image_url']);
+            $filteredProducts = Product::whereNull('image_url');
 
-            return response()->json($filteredProducts->all());
+            return response()->json(ProductResource::collection($filteredProducts->get()));
+        } else if ($request->image === true) {
+            $filteredProducts = Product::whereNotNull('image_url');
+
+            return response()->json(ProductResource::collection($filteredProducts->get()));
         }
-        return response()->json(Product::all());
+
+        return response()->json(ProductResource::collection(Product::all()));
     }
 
     public function getProduct(Request $request, $id = null)
@@ -28,7 +33,11 @@ class ApiController extends Controller
                 ->first();
         }
 
-        return response()->json($product->toArray(), 200);
+        if (!$product) {
+            return response()->json("Produto não encontrado.");
+        }
+
+        return response()->json(new ProductResource($product), 200);
     }
 
     public function getProductsByCategory($category)
@@ -38,53 +47,21 @@ class ApiController extends Controller
         return response()->json($products);
     }
 
-    public function createProduct(Request $request)
+    public function createProduct(ProductRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name'=> 'required|max:255',
-            'price' => 'required|numeric|gt:0',
-            'description' => 'required',
-            'category' => 'required|max:255',
-            'image_url' => 'nullable'
-
-        ],[
-            '*.required' => 'Campo obrigatório',
-            '*.max' => 'O campo não pode ultrapassar de 255 caracteres',
-            'price.*' => 'Campo obrigatório. O preço deve ser um número maior que zero'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
-
         $product = Product::create([
             'name' => $request->name,
             'price' => $request->price,
             'description' => $request->description,
             'category' => $request->category,
-            'image_url' => $request->image_url,
+            'image_url' => $request->image,
         ]);
-        
-        return response()->json($product->toArray(), 200);
+
+        return response()->json("Produto criado com sucesso! ID: {$product->id}", 200);
     }
 
     public function updateProduct(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'name'=> 'filled|max:255',
-            'price' => 'filled|numeric|gt:0',
-            'description' => 'filled',
-            'category' => 'filled|max:255',
-            'image_url' => 'nullable'
-
-        ],[
-            '*.filled' => 'Esse campo não pode ser vazio',
-            '*.max' => 'O campo não pode ultrapassar de 255 caracteres',
-            'price.*' => 'O preço deve ser um número maior que zero'
-        ]);
-        if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
-        }
         $product = Product::find($id);
         if ($product) {
             $product->update([
@@ -92,18 +69,24 @@ class ApiController extends Controller
                 'price' => $request->price ?? $product->price,
                 'description' => $request->description ?? $product->description,
                 'category' => $request->category ?? $product->category,
-                'image_url' => $request->image_url ?? $product->image_url,
+                'image_url' => $request->image ?? $product->image_url,
             ]);
-            
+
+            return response()->json("Produto atualizado com sucesso! ID: {$id}", 200);
         }
 
-        return response()->json($product->toArray(), 200);
+        return response()->json("Produto {$id} não encontrado.", 404);
     }
 
     public function deleteProduct($id)
     {
-        Product::find($id)->forceDelete();
+        $product = Product::find($id);
+        if ($product) {
+            $product->forceDelete();
 
-        return response("Product  {$id} removed with success.", 200);
+            return response()->json("Produto  {$id} removido com sucesso.", 200);
+        }
+
+        return response()->json("Produto {$id} não encontrado.", 404);
     }
 }
