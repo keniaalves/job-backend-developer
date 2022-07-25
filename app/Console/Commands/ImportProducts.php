@@ -32,48 +32,58 @@ class ImportProducts extends Command
      */
     public function handle()
     {
-        try {
-            if ($this->option('id')) {
-                $storedProduct = Product::where('external_id', (int)$this->option('id'))->first();
-                if ($storedProduct) {
-                    $this->info('Produto já existente na base de dados.');
-                    $allowUpdate = $this->confirm('Deseja sincronizar as informações?');
-                    if ($allowUpdate) {
-                        $response = Http::get(self::BASEURL .'/'. $this->option('id'));
-                        $product = $response->json();
-                        if (!$product) {
-                            return $this->line('Produto não encontrado!');
-                        }
-                        $storedProduct->update([
-                            'name' => $product['title'],
-                            'price' => $product['price'],
-                            'description' => $product['description'],
-                            'category' => $product['category'],
-                            'image_url' => $product['image'],
-                            'external_id' => $product['id']
-                        ]);
-                        return $this->info('Tudo certo! O produto '. $this->option('id') . ' foi atualizado com sucesso.');
-                    }
-                    return $this->line('Nenhuma ação foi realizada!');
-                }
-                $response = Http::get(self::BASEURL .'/'. $this->option('id'));
-                $product = $response->json();
-                Product::create([
-                    'name' => $product['title'],
-                    'price' => $product['price'],
-                    'description' => $product['description'],
-                    'category' => $product['category'],
-                    'image_url' => $product['image'],
-                    'external_id' => $product['id']
-                ]);
-                return $this->info('Tudo certo! O produto '. $this->option('id') . ' foi importado com sucesso.');
-            }
-
-            return $this->importSeveralProducts();
-            
-        } catch (\Exception $ex) {
-            return $this->error('Erro! Ocorreu um erro inesperado. Mensagem de erro: '. $ex->getMessage());
+        if ($this->option('id')) {
+            return $this->importSingleProduct();
         }
+
+        return $this->importSeveralProducts();
+    }
+
+    private function importSingleProduct()
+    {
+        $storedProduct = Product::where('external_id', (int)$this->option('id'))->first();
+        if ($storedProduct) {
+            $this->info('Produto já existente na base de dados.');
+            $allowUpdate = $this->confirm('Deseja sincronizar as informações?');
+            if ($allowUpdate) {
+                return $this->updateSingleProduct($storedProduct);
+            }
+            return $this->line('Nenhuma ação foi realizada!');
+        }
+        return $this->storeSingleProduct();
+    }
+
+    private function updateSingleProduct($storedProduct)
+    {
+        $response = Http::get(self::BASEURL .'/'. $this->option('id'));
+        $product = $response->json();
+        if (!$product) {
+            return $this->line('Produto não encontrado!');
+        }
+        $storedProduct->update([
+            'name' => $product['title'],
+            'price' => $product['price'],
+            'description' => $product['description'],
+            'category' => $product['category'],
+            'image_url' => $product['image'],
+            'external_id' => $product['id']
+        ]);
+        return $this->info('Tudo certo! O produto '. $this->option('id') . ' foi atualizado com sucesso.');
+    }
+
+    private function storeSingleProduct()
+    {
+        $response = Http::get(self::BASEURL .'/'. $this->option('id'));
+        $product = $response->json();
+        Product::create([
+            'name' => $product['title'],
+            'price' => $product['price'],
+            'description' => $product['description'],
+            'category' => $product['category'],
+            'image_url' => $product['image'],
+            'external_id' => $product['id']
+        ]);
+        return $this->info('Tudo certo! O produto '. $this->option('id') . ' foi importado com sucesso.');
     }
 
     private function importSeveralProducts()
@@ -89,7 +99,7 @@ class ImportProducts extends Command
                 $bar->start();
                 DB::beginTransaction();
                 if ($allowUpdate) {
-                    Product::UpdateOrCreate([
+                    Product::UpdateOrCreate(['external_id' => $product['id']],[
                         'external_id' => $product['id'],
                         'name' => $product['title'],
                         'price' => $product['price'],
@@ -99,7 +109,7 @@ class ImportProducts extends Command
                         'external_id' => $product['id']
                     ]);
                 } else {
-                    Product::firstOrCreate([
+                    Product::firstOrCreate(['external_id' => $product['id']],[
                         'external_id' => $product['id'],
                         'name' => $product['title'],
                         'price' => $product['price'],

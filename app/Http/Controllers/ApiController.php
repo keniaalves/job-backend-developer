@@ -26,7 +26,6 @@ class ApiController extends Controller
     public function getProduct(Request $request, $id = null)
     {
         $product = Product::find($id);
-
         if (!$product && $request->category && $request->name) {
             $product = Product::where('category', $request->category)
                 ->where('name', $request->name)
@@ -44,7 +43,7 @@ class ApiController extends Controller
     {
         $products = Product::where('category', $category)->get();
 
-        return response()->json($products);
+        return response()->json(ProductResource::collection($products));
     }
 
     public function createProduct(ProductRequest $request)
