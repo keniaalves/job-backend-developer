@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Controllers;
 
 use Tests\TestCase;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 
-class ApiControllerTest extends TestCase
+class ApiProductsControllerTest extends TestCase
 {
     use DatabaseMigrations;
 
@@ -85,6 +85,16 @@ class ApiControllerTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Produto criado com sucesso!');
 
+        $this->assertDatabaseCount('products', 1);
+    }
+
+    public function test_createProduct_doesnt_save_product_in_database_with_the_same_name()
+    {
+        Product::factory()->create(['name' => 'Nome Usado']);
+        $product = Product::factory()->make(['name' => 'Nome Usado']);
+        $response = $this->json('POST', '/api/product', $product->toArray());
+
+        $response->assertStatus(422);
         $this->assertDatabaseCount('products', 1);
     }
 

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\ProductRequest;
 use App\Http\Resources\Product as ProductResource;
 
-class ApiController extends Controller
+class ApiProductsController extends Controller
 {
     public function getAllProducts(Request $request)
     {
@@ -14,7 +14,7 @@ class ApiController extends Controller
             $filteredProducts = Product::whereNull('image_url');
 
             return response()->json(ProductResource::collection($filteredProducts->get()));
-        } else if ($request->image === true) {
+        } elseif ($request->image === true) {
             $filteredProducts = Product::whereNotNull('image_url');
 
             return response()->json(ProductResource::collection($filteredProducts->get()));
